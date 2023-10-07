@@ -35,11 +35,11 @@ public class QuerydslBasicTest {
         em.persist(teamA);
         em.persist(teamB);
 
-        Member member1 = new Member("member1",10,teamA);
-        Member member2 = new Member("member2",10,teamA);
+        Member member1 = new Member("member1", 10, teamA);
+        Member member2 = new Member("member2", 10, teamA);
 
-        Member member3 = new Member("member3",10,teamB);
-        Member member4 = new Member("member4",10,teamB);
+        Member member3 = new Member("member3", 10, teamB);
+        Member member4 = new Member("member4", 10, teamB);
 
         em.persist(member1);
         em.persist(member2);
@@ -76,6 +76,23 @@ public class QuerydslBasicTest {
         // 2. 파라미터 바인딩 자동으로 해결해줌 (성능 상의 이점 존재)
         assertThat(findMember.getUsername()).isEqualTo("member1");
 
+    }
+
+
+    @Test
+    public void search() {
+
+        Member findMember = queryFactory
+                .selectFrom(member)
+                .where(
+                        member.username.eq("member1"),
+                        member.age.between(10, 30),
+                        null
+                ) //and의 경우 , 로 chain 연결 할 수 있음.  + null은 무시해서 동적쿼리할때 유리함
+                .fetchOne();
+
+
+        assertThat(findMember.getUsername()).isEqualTo("member1");
     }
 
 }

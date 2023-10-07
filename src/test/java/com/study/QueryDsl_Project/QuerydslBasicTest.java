@@ -1,5 +1,6 @@
 package com.study.QueryDsl_Project;
 
+import com.querydsl.core.QueryResults;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.study.QueryDsl_Project.entity.Member;
 import com.study.QueryDsl_Project.entity.QMember;
@@ -12,6 +13,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+
+import java.util.List;
 
 import static com.study.QueryDsl_Project.entity.QMember.member;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -93,6 +96,36 @@ public class QuerydslBasicTest {
 
 
         assertThat(findMember.getUsername()).isEqualTo("member1");
+    }
+
+
+    @Test
+    public void resultFetch() {
+
+        List<Member> fetch = queryFactory
+                .selectFrom(member)
+                .fetch();
+
+//        Member fetchOne = queryFactory
+//                .selectFrom(member)
+//                .fetchOne(); // 결과값이 1개 이상이면 NonUniqueResultException
+
+
+        Member fetchFirst = queryFactory
+                .selectFrom(member)
+                .fetchFirst();
+
+        QueryResults<Member> fetchResults = queryFactory
+                .selectFrom(member)
+                .fetchResults();
+
+        List<Member> content = fetchResults.getResults(); //성능이 중요한 쿼리에서는 비추
+        long total = fetchResults.getTotal();
+
+        long count = queryFactory
+                .selectFrom(member)
+                .fetchCount();
+
     }
 
 }

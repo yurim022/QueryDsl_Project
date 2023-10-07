@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 
+import static com.study.QueryDsl_Project.entity.QMember.member;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
@@ -63,11 +64,12 @@ public class QuerydslBasicTest {
 
     @Test
     public void startQuerydsl() {
-        QMember m = new QMember("m");
+//        QMember m = new QMember("m");
+//        QMember m = QMember.member;  //static import
 
-        Member findMember = queryFactory.select(m)
-                .from(m)
-                .where(m.username.eq("member1")) //파라미터 바인딩 처리
+        Member findMember = queryFactory.select(member)
+                .from(member)
+                .where(member.username.eq("member1")) //파라미터 바인딩 처리
                 .fetchOne();
 
         // 1. 컴파일 시에 오류 잡을 수 있음

@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
@@ -734,5 +735,55 @@ public class QuerydslBasicTest {
         return userNameEq(usernameCond).and(ageEq(ageCond));
     }
 
+
+
+    @Test
+    public void bulkUpdate() {
+
+        //member1 = 10 -> DB member1
+        //member2 = 20 -> DB member2
+
+        long count = queryFactory
+                .update(member)
+                .set(member.username, "비회원")
+                .where(member.age.lt(28))
+                .execute();  //DB의 상태와 영속성 context의 상태가 달라짐
+
+        //member1 = 10 -> DB 비회원  영속성 member1
+        //member2 = 20 -> DB 비회원  영속성 member2
+
+        em.flush();
+        em.clear();  //bulk 연산하면 무조건 flush, clear 하자,,,
+
+        List<Member> result = queryFactory
+                .selectFrom(member)  //DB에서 값을 가져오지만 영속성 context에 값이 있으면 DB거 폐기함 (repeatable read)
+                .fetch();
+
+        for (Member member : result) {
+            System.out.println("member : " + member);
+        }
+    }
+
+
+    @Test
+    public void bulkAdd() {
+
+        long count = queryFactory
+                .update(member)
+                .set(member.age, member.age.add(1))
+                .execute();
+
+    }
+
+
+    @Test
+    public void bulkDelete() {
+
+        long count = queryFactory
+                .delete(member)
+                .where(member.age.gt(18))
+                .execute();
+
+    }
 
 }

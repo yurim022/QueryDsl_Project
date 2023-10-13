@@ -2,13 +2,16 @@ package com.study.QueryDsl_Project.repository;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.study.QueryDsl_Project.dto.MemberSearchCondition;
 import com.study.QueryDsl_Project.dto.MemberTeamDto;
 import com.study.QueryDsl_Project.dto.QMemberTeamDto;
+import com.study.QueryDsl_Project.entity.Member;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 
 import javax.persistence.EntityManager;
 import java.util.List;
@@ -95,14 +98,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom{
     public Page<MemberTeamDto> searchPageComplex(MemberSearchCondition condition, Pageable pageable) {
 
         //sometimes, count query is much easier than select query(eg. no need to join ,,,)
-        List<MemberTeamDto> content = getContent(condition, pageable);
-        long total = getTotal(condition);
-
-        return new PageImpl<>(content, pageable, total);
-    }
-
-    private List<MemberTeamDto> getContent(MemberSearchCondition condition, Pageable pageable) {
-        return queryFactory
+        List<MemberTeamDto> content = queryFactory
                 .select(new QMemberTeamDto(
                         member.id.as("memberId"),
                         member.username,
@@ -121,17 +117,10 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom{
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
-    }
 
-    private long getTotal(MemberSearchCondition condition) {
-        return queryFactory
-                .select(new QMemberTeamDto(
-                        member.id.as("memberId"),
-                        member.username,
-                        member.age,
-                        team.id.as("tamId"),
-                        team.name.as("teamName")
-                ))
+
+        JPAQuery<Member> countQuery = queryFactory
+                .select(member)
                 .from(member)
                 .leftJoin(member.team, team)
                 .where(
@@ -139,8 +128,9 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom{
                         teamNameEq(condition.getTeamName()),
                         ageGoe(condition.getAgeGoe()),
                         ageLoe(condition.getAgeLoe())
-                )
-                .fetchCount();
+                );
+
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchCount); // if content size is less than limit, do not execute count query
     }
 
 }
